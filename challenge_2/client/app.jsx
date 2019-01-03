@@ -1,6 +1,8 @@
 import React from 'react';
 import { render } from 'react-dom';
 import axios from 'axios';
+import moment from 'moment';
+import Chart from 'chart.js'
 
 class App extends React.Component {
   constructor(props) {
@@ -8,25 +10,21 @@ class App extends React.Component {
     this.state = {
       currency: 'USD',
       startDate: '',
-      endDate: ''
+      endDate: '',
+      bpi: {},
+      value: 'line'
     };
-    this.date = new Date();
-    this.priorDate = new Date().setDate(this.date.getDate() - 60);
-    this.twoMonthsAgo = new Date(this.priorDate);
+    this.date = moment();
+    this.priorDate = new Date().setDate(new Date().getDate() - 60);
+    this.twoMonthsAgo = moment(new Date(this.priorDate));
+    this.ctx = React.createRef();
+    this.handleOnChange = this.handleOnChange.bind(this);
   }
 
   componentDidMount() {
     this.setState({
-      startDate: {
-        year: this.twoMonthsAgo.getFullYear(),
-        month: this.twoMonthsAgo.getMonth() + 1,
-        day: this.twoMonthsAgo.getDate()
-      },
-      endDate: {
-        year: this.date.getFullYear(),
-        month: this.date.getMonth() + 1,
-        day: this.date.getDate()
-      }
+      startDate: this.twoMonthsAgo.format('YYYY-MM-DD'),
+      endDate: this.date.format('YYYY-MM-DD')
     }, () => {
       this.fetch();
     });
@@ -41,7 +39,34 @@ class App extends React.Component {
       }
     })
     .then(data => {
-      console.log(data)
+      console.log(data.data);
+      this.setState({
+        bpi: data.data
+      }, () => {
+        this.chartSetUp();
+      })
+    })
+  }
+
+  chartSetUp() {
+    const myChart = new Chart(this.ctx.current, {
+      type: this.state.value,
+      data: {
+        labels: Object.keys(this.state.bpi),
+        datasets: [{
+          label: `bpi in ${this.state.currency}`,
+          data: Object.values(this.state.bpi),
+          borderWidth: 1
+        }]
+      },
+    })
+  }
+
+  handleOnChange(e) {
+    this.setState({
+      value: e.target.value
+    }, () => {
+      this.chartSetUp();
     })
   }
 
@@ -49,6 +74,13 @@ class App extends React.Component {
     return (
       <div>
         <h1>Cryptocurrency Price Index Chart</h1>
+        <canvas ref={this.ctx} width="400" height="400"></canvas>
+        <form>
+          <select value={this.state.value} onChange={this.handleOnChange}>
+            <option value="line">Line</option>
+            <option value="bar">Bar</option>
+          </select>
+        </form>
       </div>
     );
   }

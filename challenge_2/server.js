@@ -14,23 +14,16 @@ app.use(express.static(path.join(__dirname, './public')));
 
 app.get('/api', (req, res) => {
   let { currency, startDate, endDate } = req.query;
-  // startDate = JSON.parse(startDate);
-  // endDate = JSON.parse(endDate);
-  console.log(startDate);
-  // axios
-  //   .get(
-  //     `https://api.coindesk.com/v1/bpi/historical/close.json?currency=${currency}&start=${
-  //       startDate.year
-  //     }-${startDate.month}-${startDate.day}&end=${endDate.year}-${
-  //       endDate.month
-  //     }-${endDate.day}`
-  //   )
-  //   .then(data => {
-  //     res.status(200).send(data);
-  //   })
-  //   .catch(err => {
-  //     console.error(err);
-  //   });
+  axios
+    .get(
+      `https://api.coindesk.com/v1/bpi/historical/close.json?currency=${currency}&start=${startDate}&end=${endDate}`
+    )
+    .then(data => {
+      res.status(200).send(data.data.bpi);
+    })
+    .catch(err => {
+      console.error(err);
+    });
 });
 
 const port = 1337;
